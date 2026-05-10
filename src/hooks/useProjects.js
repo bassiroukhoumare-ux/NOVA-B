@@ -15,7 +15,7 @@ const useProjects = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('projects')
-        .select('*')
+        .select('id, title, category, year, description, image, status, created_at, client, location, published_at')
         .eq('status', 'published')
         .order('created_at', { ascending: false });
 

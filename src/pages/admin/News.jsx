@@ -35,11 +35,13 @@ const News = () => {
     author: '',
     category: '',
     status: 'published',
+    published_at: '',
     cover_image: null,
     reading_time: ''
   });
 
   const [imagePreview, setImagePreview] = useState(null);
+  const [customCategory, setCustomCategory] = useState('');
 
   useEffect(() => {
     fetchArticles();
@@ -78,16 +80,22 @@ const News = () => {
   const handleOpenModal = (article = null) => {
     if (article) {
       setCurrentArticle(article);
+      
+      const predefinedCats = categories.map(c => c.name).concat(['Tendance', 'Projet', 'Événement']);
+      const isCustom = article.category && !predefinedCats.includes(article.category);
+      
       setFormData({
         title: article.title,
         excerpt: article.excerpt || '',
         content: article.content || '',
         author: article.author || '',
-        category: article.category || '',
+        category: isCustom ? 'Autre' : (article.category || ''),
         status: article.status || 'published',
+        published_at: article.published_at ? new Date(article.published_at).toISOString().slice(0,16) : '',
         cover_image: article.cover_image,
         reading_time: article.reading_time || ''
       });
+      setCustomCategory(isCustom ? article.category : '');
       setImagePreview(article.cover_image);
     } else {
       setCurrentArticle(null);
@@ -98,9 +106,11 @@ const News = () => {
         author: '',
         category: '',
         status: 'published',
+        published_at: '',
         cover_image: null,
         reading_time: ''
       });
+      setCustomCategory('');
       setImagePreview(null);
     }
     setShowModal(true);
@@ -137,16 +147,25 @@ const News = () => {
 
       const readingTime = calculateReadingTime(formData.content);
 
+      const finalCategory = formData.category === 'Autre' ? customCategory : formData.category;
+      
+      let finalPublishedAt = null;
+      if (formData.status === 'published') {
+        finalPublishedAt = new Date().toISOString();
+      } else if (formData.status === 'scheduled' && formData.published_at) {
+        finalPublishedAt = new Date(formData.published_at).toISOString();
+      }
+
       const articleData = {
         title: formData.title,
         excerpt: formData.excerpt,
         content: formData.content,
         author: formData.author,
-        category: formData.category,
+        category: finalCategory,
         status: formData.status,
         cover_image: imageUrl,
         reading_time: readingTime,
-        published_at: formData.status === 'published' ? new Date().toISOString() : null
+        published_at: finalPublishedAt
       };
 
       if (currentArticle) {
@@ -258,9 +277,11 @@ const News = () => {
                 )}
                 <div className="absolute top-4 right-4 flex gap-2">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                    article.status === 'published' ? 'bg-green-500/80 text-white' : 'bg-gray-500/80 text-white'
+                    article.status === 'published' ? 'bg-green-500/80 text-white' : 
+                    article.status === 'scheduled' ? 'bg-blue-500/80 text-white' : 'bg-gray-500/80 text-white'
                   }`}>
-                    {article.status === 'published' ? 'Publié' : 'Brouillon'}
+                    {article.status === 'published' ? 'Publié' : 
+                     article.status === 'scheduled' ? 'Programmé' : 'Brouillon'}
                   </span>
                 </div>
               </div>
@@ -400,7 +421,7 @@ const News = () => {
                     <select 
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors appearance-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors appearance-none mb-2"
                     >
                       <option value="">Sélectionner</option>
                       {categories.map(cat => (
@@ -409,7 +430,18 @@ const News = () => {
                       <option value="Tendance">Tendance</option>
                       <option value="Projet">Projet</option>
                       <option value="Événement">Événement</option>
+                      <option value="Autre">Autre</option>
                     </select>
+                    {formData.category === 'Autre' && (
+                      <input 
+                        type="text"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="Saisir la catégorie..."
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors mt-2"
+                        required
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -426,21 +458,40 @@ const News = () => {
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Statut</label>
-                    <div className="flex gap-4">
-                      {['published', 'draft'].map(status => (
-                        <button
-                          key={status}
-                          type="button"
-                          onClick={() => setFormData({...formData, status})}
-                          className={`flex-1 py-3.5 px-4 rounded-2xl border transition-all font-bold text-xs uppercase tracking-widest ${
-                            formData.status === status 
-                            ? 'bg-terracotta/10 border-terracotta text-terracotta' 
-                            : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
-                          }`}
-                        >
-                          {status === 'published' ? 'Publier immédiatement' : 'Enregistrer en Brouillon'}
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex gap-4">
+                        {[
+                          { id: 'published', label: 'Immédiat' },
+                          { id: 'scheduled', label: 'Programmer' },
+                          { id: 'draft', label: 'Brouillon' }
+                        ].map(status => (
+                          <button
+                            key={status.id}
+                            type="button"
+                            onClick={() => setFormData({...formData, status: status.id})}
+                            className={`flex-1 py-3.5 px-4 rounded-2xl border transition-all font-bold text-xs uppercase tracking-widest ${
+                              formData.status === status.id 
+                              ? 'bg-terracotta/10 border-terracotta text-terracotta' 
+                              : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                            }`}
+                          >
+                            {status.label}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {formData.status === 'scheduled' && (
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col gap-2">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Date et heure de publication</label>
+                          <input 
+                            type="datetime-local" 
+                            value={formData.published_at}
+                            onChange={(e) => setFormData({...formData, published_at: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-terracotta transition-colors"
+                            required
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

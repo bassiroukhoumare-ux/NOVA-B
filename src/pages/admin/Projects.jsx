@@ -30,14 +30,19 @@ const Projects = () => {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    client: '',
+    location: '',
     year: new Date().getFullYear().toString(),
     description: '',
     full_content: '',
     status: 'published',
+    published_at: '',
     image: null,
     gallery: []
   });
 
+  const [isConfidential, setIsConfidential] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   const [imagePreview, setImagePreview] = useState(null);
   const [galleryPreviews, setGalleryPreviews] = useState([]);
 
@@ -71,16 +76,25 @@ const Projects = () => {
   const handleOpenModal = (project = null) => {
     if (project) {
       setCurrentProject(project);
+      
+      const predefinedCats = categories.map(c => c.name).concat(['Architecture', "Design d'Intérieur", 'Urbanisme']);
+      const isCustom = project.category && !predefinedCats.includes(project.category);
+      
       setFormData({
         title: project.title,
-        category: project.category || '',
+        category: isCustom ? 'Autre' : (project.category || ''),
+        client: project.client !== 'Client Confidentiel' ? (project.client || '') : '',
+        location: project.location || '',
         year: project.year || '',
         description: project.description || '',
-        full_content: project.full_content || '',
+        full_content: project.full_content || project.content || '',
         status: project.status || 'published',
+        published_at: project.published_at ? new Date(project.published_at).toISOString().slice(0,16) : '',
         image: project.image,
         gallery: project.gallery || []
       });
+      setIsConfidential(project.client === 'Client Confidentiel');
+      setCustomCategory(isCustom ? project.category : '');
       setImagePreview(project.image);
       setGalleryPreviews(project.gallery || []);
     } else {
@@ -88,13 +102,18 @@ const Projects = () => {
       setFormData({
         title: '',
         category: '',
+        client: '',
+        location: '',
         year: new Date().getFullYear().toString(),
         description: '',
         full_content: '',
         status: 'published',
+        published_at: '',
         image: null,
         gallery: []
       });
+      setIsConfidential(false);
+      setCustomCategory('');
       setImagePreview(null);
       setGalleryPreviews([]);
     }
@@ -141,13 +160,25 @@ const Projects = () => {
         })
       );
 
+      const finalCategory = formData.category === 'Autre' ? customCategory : formData.category;
+      
+      let finalPublishedAt = null;
+      if (formData.status === 'published') {
+        finalPublishedAt = new Date().toISOString();
+      } else if (formData.status === 'scheduled' && formData.published_at) {
+        finalPublishedAt = new Date(formData.published_at).toISOString();
+      }
+
       const projectData = {
         title: formData.title,
-        category: formData.category,
+        category: finalCategory,
+        client: isConfidential ? 'Client Confidentiel' : formData.client,
+        location: formData.location,
         year: formData.year,
         description: formData.description,
         full_content: formData.full_content,
         status: formData.status,
+        published_at: finalPublishedAt,
         image: imageUrl,
         gallery: galleryUrls
       };
@@ -271,9 +302,11 @@ const Projects = () => {
                     <td className="px-6 py-4 text-gray-400 text-sm">{project.year}</td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-                        project.status === 'published' ? 'bg-green-500/10 text-green-500' : 'bg-gray-500/10 text-gray-500'
+                        project.status === 'published' ? 'bg-green-500/10 text-green-500' : 
+                        project.status === 'scheduled' ? 'bg-blue-500/10 text-blue-500' : 'bg-gray-500/10 text-gray-500'
                       }`}>
-                        {project.status}
+                        {project.status === 'published' ? 'Publié' : 
+                         project.status === 'scheduled' ? 'Programmé' : 'Brouillon'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -357,7 +390,7 @@ const Projects = () => {
                     <select 
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors appearance-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors appearance-none mb-2"
                     >
                       <option value="">Sélectionner une catégorie</option>
                       {categories.map(cat => (
@@ -366,7 +399,54 @@ const Projects = () => {
                       <option value="Architecture">Architecture</option>
                       <option value="Design d'Intérieur">Design d'Intérieur</option>
                       <option value="Urbanisme">Urbanisme</option>
+                      <option value="Autre">Autre</option>
                     </select>
+                    {formData.category === 'Autre' && (
+                      <input 
+                        type="text"
+                        value={customCategory}
+                        onChange={(e) => setCustomCategory(e.target.value)}
+                        placeholder="Saisir la catégorie..."
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors mt-2"
+                        required
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Client</label>
+                    <input 
+                      type="text"
+                      value={formData.client}
+                      onChange={(e) => setFormData({...formData, client: e.target.value})}
+                      disabled={isConfidential}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors disabled:opacity-50"
+                      placeholder={isConfidential ? "Confidentiel" : "Nom du client"}
+                    />
+                    <label className="flex items-center gap-2 mt-2 text-xs text-gray-400 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={isConfidential} 
+                        onChange={(e) => {
+                          setIsConfidential(e.target.checked);
+                          if (e.target.checked) setFormData({...formData, client: ''});
+                        }} 
+                        className="rounded border-white/10 bg-white/5 text-terracotta focus:ring-terracotta"
+                      />
+                      Projet Confidentiel
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Lieu / Adresse</label>
+                    <input 
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors"
+                      placeholder="Ex: Abidjan, Côte d'Ivoire"
+                    />
                   </div>
                 </div>
 
@@ -382,21 +462,40 @@ const Projects = () => {
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Statut</label>
-                    <div className="flex gap-4">
-                      {['published', 'draft'].map(status => (
-                        <button
-                          key={status}
-                          type="button"
-                          onClick={() => setFormData({...formData, status})}
-                          className={`flex-1 py-3.5 px-4 rounded-2xl border transition-all font-bold text-xs uppercase tracking-widest ${
-                            formData.status === status 
-                            ? 'bg-terracotta/10 border-terracotta text-terracotta' 
-                            : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
-                          }`}
-                        >
-                          {status === 'published' ? 'Publié' : 'Brouillon'}
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex gap-4">
+                        {[
+                          { id: 'published', label: 'Immédiat' },
+                          { id: 'scheduled', label: 'Programmer' },
+                          { id: 'draft', label: 'Brouillon' }
+                        ].map(status => (
+                          <button
+                            key={status.id}
+                            type="button"
+                            onClick={() => setFormData({...formData, status: status.id})}
+                            className={`flex-1 py-3.5 px-4 rounded-2xl border transition-all font-bold text-xs uppercase tracking-widest ${
+                              formData.status === status.id 
+                              ? 'bg-terracotta/10 border-terracotta text-terracotta' 
+                              : 'bg-white/5 border-white/10 text-gray-500 hover:border-white/20'
+                            }`}
+                          >
+                            {status.label}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {formData.status === 'scheduled' && (
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col gap-2">
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Date et heure de publication</label>
+                          <input 
+                            type="datetime-local" 
+                            value={formData.published_at}
+                            onChange={(e) => setFormData({...formData, published_at: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:border-terracotta transition-colors"
+                            required
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -414,13 +513,13 @@ const Projects = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Contenu Détaillé</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Contenu Détaillé (Public)</label>
                   <textarea 
                     rows="6"
                     value={formData.full_content}
                     onChange={(e) => setFormData({...formData, full_content: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-white focus:border-terracotta transition-colors"
-                    placeholder="Description complète, défis, solutions..."
+                    placeholder="Ce contenu sera affiché publiquement sur la page du projet. (Supporte le HTML)"
                   />
                 </div>
 

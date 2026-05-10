@@ -15,7 +15,7 @@ const useArticles = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('articles')
-        .select('*')
+        .select('id, title, excerpt, category, author, cover_image, published_at, status, reading_time')
         .eq('status', 'published')
         .order('published_at', { ascending: false });
 

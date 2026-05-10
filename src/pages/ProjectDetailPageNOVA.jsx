@@ -85,10 +85,10 @@ const ProjectDetailPageNOVA = () => {
             once: true
           }} className="bg-[#252525] p-10 md:p-14 rounded-[40px] border border-white/5 shadow-2xl">
               <h2 className="text-3xl font-display font-bold text-white mb-8">Concept & Détails</h2>
-              {project.content ? (
+              {(project.full_content || project.content) ? (
                   <div 
                     className="text-xl text-gray-300 leading-relaxed font-light prose prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: project.content }}
+                    dangerouslySetInnerHTML={{ __html: project.full_content || project.content }}
                   />
               ) : (
                   <div className="text-xl text-gray-300 leading-relaxed font-light whitespace-pre-line">
@@ -135,18 +135,20 @@ const ProjectDetailPageNOVA = () => {
             }} className="bg-[#1e1e1e]/80 backdrop-blur-xl p-10 rounded-[30px] border border-white/10 shadow-xl">
                 <h3 className="text-2xl font-display font-bold text-white mb-8">Détails du Projet</h3>
                 <ul className="space-y-6 mb-10">
-                  {project.client !== 'Client Confidentiel' && (
+                  {project.client && project.client !== 'Client Confidentiel' && (
                     <li className="flex justify-between border-b border-white/10 pb-4">
                       <span className="text-sm uppercase tracking-wider text-gray-500 font-bold">Client</span> 
                       <span className="text-white font-medium">{project.client}</span>
                     </li>
                   )}
-                  <li className="flex justify-between border-b border-white/10 pb-4">
-                    <span className="text-sm uppercase tracking-wider text-gray-500 font-bold">Lieu</span> 
-                    <span className="text-white font-medium flex items-center gap-2">
-                      <MapPin size={16} className="text-terracotta" /> {project.location || "Abidjan, CI"}
-                    </span>
-                  </li>
+                  {project.location && (
+                    <li className="flex justify-between border-b border-white/10 pb-4">
+                      <span className="text-sm uppercase tracking-wider text-gray-500 font-bold">Lieu</span> 
+                      <span className="text-white font-medium flex items-center gap-2">
+                        <MapPin size={16} className="text-terracotta" /> {project.location}
+                      </span>
+                    </li>
+                  )}
                   <li className="flex justify-between border-b border-white/10 pb-4">
                     <span className="text-sm uppercase tracking-wider text-gray-500 font-bold">Services</span> 
                     <span className="text-white font-medium text-right">{project.category}</span>
