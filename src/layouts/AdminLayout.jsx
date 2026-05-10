@@ -20,7 +20,7 @@ const AdminLayout = () => {
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/admin/diagnostics', icon: MessageSquare, label: 'Diagnostics' },
     { path: '/admin/projets', icon: FolderKanban, label: 'Projets' },
-    { path: '/admin/equipe', icon: Users, label: 'Équipe' },
+    { path: '/admin/testimonials', icon: Star, label: 'Témoignages' },
     { path: '/admin/articles', icon: Newspaper, label: 'Actualités' },
     { path: '/admin/legal', icon: FileText, label: 'Pages Légales' },
   ];

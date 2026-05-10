@@ -1,47 +1,75 @@
 import { useState, useEffect } from 'react';
-import { articles as initialArticles } from '@/lib/data';
+import { supabase } from '../lib/supabase';
 
 const useArticles = () => {
-  const [articles, setArticles] = useState(initialArticles);
-  const [likes, setLikes] = useState({});
-  const [comments, setComments] = useState({});
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load likes and comments from localStorage
-    const storedLikes = JSON.parse(localStorage.getItem('novab_article_likes') || '{}');
-    const storedComments = JSON.parse(localStorage.getItem('novab_article_comments') || '{}');
-    setLikes(storedLikes);
-    setComments(storedComments);
+    fetchArticles();
   }, []);
 
-  const getArticle = (id) => {
-    return articles.find(a => a.id === parseInt(id));
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .order('published_at', { ascending: false });
+
+      if (error) throw error;
+      setArticles(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const getArticle = async (id) => {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  };
+
+  const [likes, setLikes] = useState(() => JSON.parse(localStorage.getItem('NOVA_LIKES') || '{}'));
+  const [comments, setComments] = useState(() => JSON.parse(localStorage.getItem('NOVA_COMMENTS') || '{}'));
+
+  useEffect(() => {
+    localStorage.setItem('NOVA_LIKES', JSON.stringify(likes));
+  }, [likes]);
+
+  useEffect(() => {
+    localStorage.setItem('NOVA_COMMENTS', JSON.stringify(comments));
+  }, [comments]);
+
   const toggleLike = (articleId) => {
-    const newLikes = { ...likes };
-    if (newLikes[articleId]) {
-      delete newLikes[articleId];
-    } else {
-      newLikes[articleId] = true;
-    }
-    setLikes(newLikes);
-    localStorage.setItem('novab_article_likes', JSON.stringify(newLikes));
+    setLikes(prev => {
+      const newLikes = { ...prev };
+      if (newLikes[articleId]) {
+        delete newLikes[articleId];
+      } else {
+        newLikes[articleId] = true;
+      }
+      return newLikes;
+    });
   };
 
   const addComment = (articleId, comment) => {
-    const articleComments = comments[articleId] || [];
-    const newComment = {
-      id: Date.now(),
-      ...comment,
-      date: new Date().toISOString()
-    };
-    const newComments = {
-      ...comments,
-      [articleId]: [newComment, ...articleComments]
-    };
-    setComments(newComments);
-    localStorage.setItem('novab_article_comments', JSON.stringify(newComments));
+    setComments(prev => {
+      const articleComments = prev[articleId] || [];
+      return {
+        ...prev,
+        [articleId]: [...articleComments, { ...comment, id: Date.now(), date: new Date().toISOString() }]
+      };
+    });
   };
 
   const getComments = (articleId) => {
@@ -49,21 +77,42 @@ const useArticles = () => {
   };
 
   const getLikesCount = (articleId) => {
-    // Determine a base count based on ID to make it look active, plus user like
-    const baseCount = articleId * 14 + 7;
-    return likes[articleId] ? baseCount + 1 : baseCount;
+    // For now it just returns 1 if liked, 0 if not (since it's local only)
+    return likes[articleId] ? 1 : 0;
   };
 
-  const isLiked = (articleId) => !!likes[articleId];
+  const isLiked = (articleId) => {
+    return !!likes[articleId];
+  };
 
-  return {
-    articles,
-    getArticle,
-    toggleLike,
-    addComment,
-    getComments,
-    getLikesCount,
-    isLiked
+  const getArticleById = async (id) => {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
+  return { 
+    articles, 
+    loading, 
+    error, 
+    refresh: fetchArticles, 
+    getArticle, 
+    getArticleById,
+    toggleLike, 
+    addComment, 
+    getComments, 
+    getLikesCount, 
+    isLiked 
   };
 };
 

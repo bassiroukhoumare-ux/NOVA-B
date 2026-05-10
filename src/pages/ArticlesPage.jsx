@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { db } from '@/lib/db';
+import useArticles from '@/hooks/useArticles';
 import ArticleCard from '@/components/ArticleCard';
 import usePageTracking from '@/hooks/usePageTracking';
 
 const ArticlesPage = () => {
   usePageTracking();
-  const [articles, setArticles] = useState([]);
-
-  useEffect(() => {
-    setArticles(db.getArticles());
-  }, []);
+  const { articles, loading } = useArticles();
 
   return (
     <div className="min-h-screen bg-anthracite pt-32 pb-20 relative overflow-hidden">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Linkedin, Facebook, ArrowRight, MapPin, Mail, Phone, Send } from 'lucide-react';
+import { Instagram, Linkedin, Facebook, Twitter, ArrowRight, MapPin, Mail, Phone, Send } from 'lucide-react';
 import { CONTACT_INFO } from '@/lib/constants';
 const Footer = () => {
   return <footer className="bg-[#E0E0E0] text-[#2C2C2C] pt-24 pb-12 relative overflow-hidden border-t border-white/5">
@@ -14,9 +14,27 @@ const Footer = () => {
             <p className="text-[#2C2C2C]/80 text-sm leading-relaxed max-w-xs">Chaque projet mérite
 une signature d'exception.</p>
             <div className="flex gap-4">
-              {[Instagram, Linkedin, Facebook].map((Icon, idx) => <a key={idx} href="#" className="w-10 h-10 rounded-full bg-[#2C2C2C]/10 flex items-center justify-center hover:bg-terracotta hover:text-white transition-all duration-300 group">
-                  <Icon size={18} className="text-[#2C2C2C] group-hover:text-white transition-colors" />
-                </a>)}
+              {(() => {
+                const storedLinks = JSON.parse(localStorage.getItem('NOVA_SOCIAL_LINKS') || '{"instagram":"","linkedin":"","facebook":"","twitter":""}');
+                const items = [
+                  { Icon: Instagram, url: storedLinks.instagram },
+                  { Icon: Linkedin, url: storedLinks.linkedin },
+                  { Icon: Facebook, url: storedLinks.facebook },
+                  { Icon: Twitter, url: storedLinks.twitter } // Added Twitter
+                ].filter(item => item.url);
+                
+                return items.length > 0 ? items.map((item, idx) => (
+                  <a key={idx} href={item.url} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-[#2C2C2C]/10 flex items-center justify-center hover:bg-terracotta hover:text-white transition-all duration-300 group">
+                    <item.Icon size={18} className="text-[#2C2C2C] group-hover:text-white transition-colors" />
+                  </a>
+                )) : (
+                  [Instagram, Linkedin, Facebook].map((Icon, idx) => (
+                    <a key={idx} href="#" className="w-10 h-10 rounded-full bg-[#2C2C2C]/10 flex items-center justify-center hover:bg-terracotta hover:text-white transition-all duration-300 group">
+                      <Icon size={18} className="text-[#2C2C2C] group-hover:text-white transition-colors" />
+                    </a>
+                  ))
+                );
+              })()}
             </div>
           </div>
 

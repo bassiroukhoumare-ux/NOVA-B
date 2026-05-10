@@ -1,19 +1,34 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ArrowRight, MapPin, Tag, Calendar } from 'lucide-react';
-import { projects } from '@/lib/data';
+import useProjects from '@/hooks/useProjects';
 
 const ProjectDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const project = projects.find(p => p.id === parseInt(id));
+  const { getProjectById } = useProjects();
+  const [project, setProject] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!project) navigate('/projets');
+    const fetchProject = async () => {
+      const data = await getProjectById(id);
+      if (data) {
+        setProject(data);
+      } else {
+        // Fallback for non-UUID ids (legacy mock ids)
+        // If it's a numeric ID, we might have issues if Supabase uses UUIDs
+        // But for this migration, we'll assume valid IDs are used
+        navigate('/projets');
+      }
+      setLoading(false);
+    };
+    fetchProject();
     window.scrollTo(0, 0);
-  }, [id, project, navigate]);
+  }, [id, navigate]);
 
+  if (loading) return <div className="text-white text-center pt-40">Chargement...</div>;
   if (!project) return null;
 
   return (
@@ -67,18 +82,12 @@ const ProjectDetailPage = () => {
       <div className="container mx-auto px-6 py-20">
         {/* Navigation Breadcrumbs Logic */}
         <div className="flex justify-between items-center mb-12 border-b border-white/5 pb-8">
-           <button 
-             onClick={() => navigate(`/projets/${project.id === 1 ? 6 : project.id - 1}`)}
+           <Link 
+             to="/projets"
              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm uppercase tracking-wider"
            >
-             <ChevronLeft size={16} /> Projet Précédent
-           </button>
-           <button 
-             onClick={() => navigate(`/projets/${project.id === 3 ? 1 : project.id + 1}`)}
-             className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm uppercase tracking-wider"
-           >
-             Projet Suivant <ArrowRight size={16} />
-           </button>
+             <ChevronLeft size={16} /> Explorer d'autres projets
+           </Link>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">

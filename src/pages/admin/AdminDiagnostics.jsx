@@ -1,38 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, Trash2, X, Search, Calendar, Phone, Mail, MapPin } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import useDiagnostics from '@/hooks/useDiagnostics';
 
 const AdminDiagnostics = () => {
-  const [diagnostics, setDiagnostics] = useState([]);
-  const [filteredDiagnostics, setFilteredDiagnostics] = useState([]);
+  const { diagnostics, loading, deleteDiagnostic } = useDiagnostics();
   const [search, setSearch] = useState('');
   const [selectedDiag, setSelectedDiag] = useState(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const data = db.getDiagnostics();
-    setDiagnostics(data);
-    setFilteredDiagnostics(data);
-  }, []);
+  const filteredDiagnostics = diagnostics.filter(d => 
+    d.user_name?.toLowerCase().includes(search.toLowerCase()) || 
+    d.email?.toLowerCase().includes(search.toLowerCase()) ||
+    d.type?.toLowerCase().includes(search.toLowerCase())
+  );
 
-  useEffect(() => {
-    const filtered = diagnostics.filter(d => 
-      d.name.toLowerCase().includes(search.toLowerCase()) || 
-      d.email.toLowerCase().includes(search.toLowerCase()) ||
-      d.type.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredDiagnostics(filtered);
-  }, [search, diagnostics]);
-
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Supprimer ce diagnostic ?')) {
-      const updated = diagnostics.filter(d => d.id !== id);
-      setDiagnostics(updated);
-      db.saveDiagnostics(updated);
-      toast({ title: "Diagnostic supprimé" });
-      if (selectedDiag?.id === id) setSelectedDiag(null);
+      try {
+        await deleteDiagnostic(id);
+        toast({ title: "Diagnostic supprimé" });
+        if (selectedDiag?.id === id) setSelectedDiag(null);
+      } catch (err) {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
     }
   };
 
@@ -73,10 +65,10 @@ const AdminDiagnostics = () => {
                 filteredDiagnostics.map(diag => (
                   <tr key={diag.id} className="hover:bg-white/5 transition-colors">
                     <td className="p-4 text-gray-300 text-sm">
-                      {new Date(diag.createdAt).toLocaleDateString()}
+                      {new Date(diag.created_at).toLocaleDateString()}
                     </td>
                     <td className="p-4 font-medium text-white">
-                      {diag.name}
+                      {diag.user_name}
                       <div className="text-xs text-gray-500">{diag.email}</div>
                     </td>
                     <td className="p-4 text-gray-300">
@@ -106,7 +98,7 @@ const AdminDiagnostics = () => {
               <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
                 <div>
                   <h2 className="text-xl font-bold text-white">{selectedDiag.type}</h2>
-                  <p className="text-sm text-gray-400">Reçu le {new Date(selectedDiag.createdAt).toLocaleString()}</p>
+                  <p className="text-sm text-gray-400">Reçu le {new Date(selectedDiag.created_at).toLocaleString()}</p>
                 </div>
                 <button onClick={() => setSelectedDiag(null)}><X className="text-gray-400 hover:text-white" /></button>
               </div>
@@ -133,10 +125,10 @@ const AdminDiagnostics = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold">
-                        {selectedDiag.name.charAt(0)}
+                        {selectedDiag.user_name?.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-white font-bold">{selectedDiag.name}</p>
+                        <p className="text-white font-bold">{selectedDiag.user_name}</p>
                         <p className="text-xs text-gray-400">Client</p>
                       </div>
                     </div>

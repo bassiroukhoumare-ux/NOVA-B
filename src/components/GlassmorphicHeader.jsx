@@ -23,7 +23,7 @@ const GlassmorphicHeader = () => {
     { name: 'Services', path: '/services' },
     { name: 'Projets', path: '/projets' },
     { name: 'Actualités', path: '/actualites' },
-    { name: 'A Propos', path: '/a-propos' }
+    { name: 'À Propos', path: '/a-propos' }
   ];
 
   return (

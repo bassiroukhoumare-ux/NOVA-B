@@ -1,9 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Star, Quote } from 'lucide-react';
-import { testimonials } from '@/lib/data';
+import useTestimonials from '@/hooks/useTestimonials';
 
 const TestimonialsSliderNOVA = () => {
+  const { testimonials, loading } = useTestimonials();
+  
+  if (loading || testimonials.length === 0) return null;
+
   // Triple array for super smooth infinite loop
   const loopTestimonials = [...testimonials, ...testimonials, ...testimonials];
 
@@ -50,11 +54,6 @@ const TestimonialsSliderNOVA = () => {
               </div>
               
               <div className="flex items-center gap-4 mb-8">
-                <img 
-                  src={testimonial.image} 
-                  alt={testimonial.name}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-white/10 group-hover:border-terracotta transition-colors"
-                />
                 <div>
                   <h4 className="text-white font-bold text-lg font-display">{testimonial.name}</h4>
                   <p className="text-terracotta text-sm font-medium">{testimonial.role}</p>

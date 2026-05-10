@@ -1,26 +1,21 @@
-import React, { useRef } from 'react';
-import { motion, useInView, useSpring, useTransform } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { motion, useInView, animate } from 'framer-motion';
 
 const Counter = ({ value, suffix = "" }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const springValue = useSpring(0, { bounce: 0, duration: 2000 });
-  const displayValue = useTransform(springValue, (latest) => Math.floor(latest));
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     if (isInView) {
-      springValue.set(value);
+      const controls = animate(0, value, {
+        duration: 2,
+        ease: "easeOut",
+        onUpdate: (latest) => setCurrent(Math.floor(latest)),
+      });
+      return () => controls.stop();
     }
-  }, [isInView, value, springValue]);
-
-  useEffect(() => {
-    const unsubscribe = displayValue.on("change", (latest) => {
-      setCurrent(latest);
-    });
-    return () => unsubscribe();
-  }, [displayValue]);
+  }, [isInView, value]);
 
   return <span ref={ref}>{current}{suffix}</span>;
 };

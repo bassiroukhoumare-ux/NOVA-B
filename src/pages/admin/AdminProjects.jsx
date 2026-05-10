@@ -1,27 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 import { Plus, Edit, Trash2, X, Upload, Link as LinkIcon, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import useProjects from '@/hooks/useProjects';
+import useAdmin from '@/hooks/useAdmin';
 
 const AdminProjects = () => {
-  const [projects, setProjects] = useState([]);
+  const { projects, loading: fetchLoading, refresh } = useProjects();
+  const { upsertProject, deleteProject, loading: adminLoading } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [useUrl, setUseUrl] = useState(true);
+  const [editorContent, setEditorContent] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Architecture');
+  const [isConfidential, setIsConfidential] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setProjects(db.getProjects());
-  }, []);
-
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-      const updated = projects.filter(p => p.id !== id);
-      setProjects(updated);
-      db.saveProjects(updated);
-      toast({ title: "Projet supprimé" });
+      try {
+        await deleteProject(id);
+        refresh();
+        toast({ title: "Projet supprimé" });
+      } catch (err) {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
     }
   };
 
@@ -40,40 +46,54 @@ const AdminProjects = () => {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const category = formData.get('category') === 'Autre' ? formData.get('customCategory') : formData.get('category');
+    const category = selectedCategory === 'Autre' ? formData.get('customCategory') : selectedCategory;
     
-    const newProject = {
-      id: currentProject ? currentProject.id : Date.now(),
+    const projectData = {
       title: formData.get('title'),
       category: category,
-      client: formData.get('isConfidential') ? 'Client Confidentiel' : formData.get('client'),
+      client: isConfidential ? 'Client Confidentiel' : formData.get('client'),
       year: formData.get('year'),
-      workStartDate: formData.get('workStartDate'),
       description: formData.get('description'),
+      content: editorContent,
+      location: formData.get('location') || '',
       image: useUrl ? formData.get('imageUrl') : (imagePreview || 'https://images.unsplash.com/photo-1510414866645-87ed8a0fa980'),
-      gallery: currentProject?.gallery || []
+      status: 'published'
     };
 
-    let updated;
     if (currentProject) {
-      updated = projects.map(p => p.id === newProject.id ? newProject : p);
-    } else {
-      updated = [newProject, ...projects];
+      projectData.id = currentProject.id;
     }
-    
-    setProjects(updated);
-    db.saveProjects(updated);
-    setIsModalOpen(false);
-    toast({ title: currentProject ? "Projet modifié" : "Projet créé" });
+
+    try {
+      await upsertProject(projectData);
+      refresh();
+      setIsModalOpen(false);
+      toast({ title: currentProject ? "Projet modifié" : "Projet créé" });
+    } catch (err) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    }
   };
 
   const openModal = (project = null) => {
     setCurrentProject(project);
     setImagePreview(project?.image || '');
     setUseUrl(true);
+    
+    // Initialize states based on project data
+    const existingCategory = project?.category;
+    const predefinedCategories = ['Architecture', 'Design d\'Intérieur', 'Paysagisme', 'Rénovation'];
+    
+    if (existingCategory && !predefinedCategories.includes(existingCategory)) {
+        setSelectedCategory('Autre');
+    } else {
+        setSelectedCategory(existingCategory || 'Architecture');
+    }
+    
+    setEditorContent(project?.content || project?.description || '');
+    setIsConfidential(project?.client === 'Client Confidentiel');
     setIsModalOpen(true);
   };
 
@@ -141,13 +161,26 @@ const AdminProjects = () => {
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Catégorie</label>
-                    <select name="category" defaultValue={currentProject?.category} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white [&>option]:text-black">
+                    <select 
+                        name="category" 
+                        value={selectedCategory} 
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white [&>option]:text-black mb-2"
+                    >
                       <option value="Architecture">Architecture</option>
                       <option value="Résidentiel">Résidentiel</option>
                       <option value="Commercial">Commercial</option>
                       <option value="Rénovation">Rénovation</option>
                       <option value="Autre">Autre</option>
                     </select>
+                    {selectedCategory === 'Autre' && (
+                      <input 
+                        name="customCategory" 
+                        placeholder="Saisir la catégorie..." 
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" 
+                        required 
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -155,11 +188,18 @@ const AdminProjects = () => {
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Client</label>
                     <div className="flex gap-2">
-                       <input name="client" defaultValue={currentProject?.client} className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" />
+                       <input 
+                        name="client" 
+                        defaultValue={currentProject?.client !== 'Client Confidentiel' ? currentProject?.client : ''} 
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" 
+                        disabled={isConfidential}
+                        placeholder={isConfidential ? "Confidentiel" : "Nom du client"}
+                        required={!isConfidential}
+                       />
                     </div>
                     <label className="flex items-center gap-2 mt-2 text-xs text-gray-400">
-                      <input type="checkbox" name="isConfidential" defaultChecked={currentProject?.client === 'Client Confidentiel'} />
-                      Confidentiel
+                      <input type="checkbox" checked={isConfidential} onChange={(e) => setIsConfidential(e.target.checked)} />
+                      Confidentiel (Ne pas afficher le nom publiquement)
                     </label>
                   </div>
                   <div>
@@ -168,9 +208,27 @@ const AdminProjects = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Lieu / Adresse</label>
+                    <input name="location" defaultValue={currentProject?.location || ''} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" placeholder="ex: Abidjan, Côte d'Ivoire" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Description courte (pour les cartes)</label>
+                    <textarea name="description" rows="2" defaultValue={currentProject?.description} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" required />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Description</label>
-                  <textarea name="description" rows="4" defaultValue={currentProject?.description} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" required />
+                  <label className="block text-xs text-gray-400 mb-1">Contenu détaillé (pour la page du projet)</label>
+                  <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+                      <ReactQuill 
+                        theme="snow" 
+                        value={editorContent} 
+                        onChange={setEditorContent}
+                        className="text-white"
+                      />
+                  </div>
                 </div>
                 
                 {/* Image Handling */}

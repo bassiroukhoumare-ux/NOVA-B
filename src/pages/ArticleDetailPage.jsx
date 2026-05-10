@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useArticles from '@/hooks/useArticles';
@@ -6,11 +6,22 @@ import { ChevronLeft, Calendar, User, Clock, Heart, Share2, Facebook, Linkedin, 
 
 const ArticleDetailPage = () => {
   const { id } = useParams();
-  const { getArticle, toggleLike, addComment, getComments, getLikesCount, isLiked } = useArticles();
-  const article = getArticle(id);
+  const { getArticleById, toggleLike, addComment, getComments, getLikesCount, isLiked } = useArticles();
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [commentForm, setCommentForm] = useState({ name: '', email: '', text: '' });
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    const fetchArticle = async () => {
+      const data = await getArticleById(id);
+      setArticle(data);
+      setLoading(false);
+    };
+    fetchArticle();
+  }, [id]);
+
+  if (loading) return <div className="text-white text-center pt-40">Chargement...</div>;
   if (!article) return <div className="text-white text-center pt-40">Article non trouvé</div>;
 
   const handleCopyLink = () => {
@@ -21,12 +32,10 @@ const ArticleDetailPage = () => {
 
   const handleSubmitComment = (e) => {
     e.preventDefault();
-    if (!commentForm.text.trim()) return;
-    addComment(article.id, {
-      name: commentForm.name || 'Anonyme',
-      text: commentForm.text
-    });
-    setCommentForm({ name: '', email: '', text: '' });
+    if (commentForm.text.trim()) {
+      addComment(id, commentForm);
+      setCommentForm({ name: '', email: '', text: '' });
+    }
   };
 
   return (
@@ -37,7 +46,7 @@ const ArticleDetailPage = () => {
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 2 }}
-          src={article.coverImage} 
+          src={article.cover_image} 
           alt={article.title} 
           className="w-full h-full object-cover"
         />
@@ -49,8 +58,8 @@ const ArticleDetailPage = () => {
           </Link>
           <div className="flex flex-wrap gap-4 text-sm text-gray-300 mb-4">
              <span className="bg-terracotta px-3 py-1 rounded-full text-white font-bold">{article.category}</span>
-             <span className="flex items-center gap-1"><Calendar size={14} /> {article.date}</span>
-             <span className="flex items-center gap-1"><Clock size={14} /> {article.readingTime} de lecture</span>
+             <span className="flex items-center gap-1"><Calendar size={14} /> {article.published_at?.split('T')[0]}</span>
+             <span className="flex items-center gap-1"><Clock size={14} /> 5 min de lecture</span>
           </div>
           <h1 className="text-4xl md:text-6xl font-display font-bold text-white max-w-4xl leading-tight">
             {article.title}
@@ -65,11 +74,33 @@ const ArticleDetailPage = () => {
             <p className="text-xl text-white font-medium mb-8 border-l-4 border-terracotta pl-6 italic">
               {article.excerpt}
             </p>
-            {article.content.split('\n').map((paragraph, idx) => (
-              <p key={idx} className="mb-6 text-gray-300">
-                {paragraph}
-              </p>
-            ))}
+            <div 
+              className="text-gray-300 [&>p]:mb-6 [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:text-white [&>h1]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:text-white [&>h2]:mb-4 [&>h3]:text-xl [&>h3]:font-bold [&>h3]:text-white [&>h3]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-6 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:mb-6 [&>a]:text-terracotta [&>a]:underline [&>blockquote]:border-l-4 [&>blockquote]:border-terracotta [&>blockquote]:pl-4 [&>blockquote]:italic [&>blockquote]:mb-6"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+            
+            {article.media_urls && article.media_urls.length > 0 && (
+              <div className="mt-12 space-y-6">
+                <h3 className="text-2xl font-bold text-white mb-6">Médias associés</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {article.media_urls.map((url, idx) => {
+                    const isVideo = url.match(/\.(mp4|webm|ogg)$/i) || url.includes('youtube.com') || url.includes('vimeo.com');
+                    if (isVideo) {
+                      return (
+                        <div key={idx} className="rounded-2xl overflow-hidden bg-black/50 aspect-video relative">
+                          <iframe src={url.replace('watch?v=', 'embed/')} className="absolute inset-0 w-full h-full" allowFullScreen></iframe>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div key={idx} className="rounded-2xl overflow-hidden bg-black/50 aspect-video relative group">
+                        <img src={url} alt="Média supplémentaire" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-12 flex items-center justify-between border-t border-white/10 pt-8">
@@ -83,9 +114,9 @@ const ArticleDetailPage = () => {
               </button>
             </div>
             <div className="flex gap-2">
-              <button className="p-3 bg-blue-600 rounded-full text-white hover:scale-110 transition-transform"><Facebook size={18} /></button>
-              <button className="p-3 bg-blue-500 rounded-full text-white hover:scale-110 transition-transform"><Linkedin size={18} /></button>
-              <button className="p-3 bg-sky-500 rounded-full text-white hover:scale-110 transition-transform"><Twitter size={18} /></button>
+              <button onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, '_blank')} className="p-3 bg-[#1877F2] rounded-full text-white hover:scale-110 transition-transform"><Facebook size={18} /></button>
+              <button onClick={() => window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(article.title)}`, '_blank')} className="p-3 bg-[#0A66C2] rounded-full text-white hover:scale-110 transition-transform"><Linkedin size={18} /></button>
+              <button onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(article.title)}`, '_blank')} className="p-3 bg-[#1DA1F2] rounded-full text-white hover:scale-110 transition-transform"><Twitter size={18} /></button>
               <button 
                 onClick={handleCopyLink}
                 className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all relative"
@@ -151,16 +182,13 @@ const ArticleDetailPage = () => {
         <div className="lg:col-span-4 space-y-8">
            <div className="bg-[#2C2C2C] p-8 rounded-[30px] border border-white/10 sticky top-32">
              <div className="flex items-center gap-4 mb-6">
-               <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden">
-                 <img src="https://images.unsplash.com/photo-1493882552576-fce827c6161e" alt="Author" className="w-full h-full object-cover" />
-               </div>
                <div>
                  <p className="text-xs text-terracotta font-bold uppercase tracking-wider">Auteur</p>
                  <h4 className="text-white font-bold text-lg">{article.author}</h4>
                </div>
              </div>
              <p className="text-gray-400 text-sm mb-6">
-               Architecte principal chez NOVA B, passionné par l'intégration de la modernité dans le contexte culturel africain.
+               {article.author_role || "Équipe NOVA B"}
              </p>
              <button className="w-full border border-white/20 text-white py-3 rounded-xl hover:bg-white/5 transition-colors font-medium">
                Voir tous ses articles

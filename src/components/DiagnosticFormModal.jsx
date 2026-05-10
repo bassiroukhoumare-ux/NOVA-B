@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, ArrowRight, Building2, Home, Briefcase, Hammer, Calendar } from 'lucide-react';
-import { db } from '@/lib/db';
+import { supabase } from '../lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
 const DiagnosticFormModal = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     type: '',
     location: '',
@@ -31,37 +32,59 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
   
   const handleBack = () => setStep(prev => prev - 1);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.email) return;
 
-    // Save to LocalStorage
-    db.addDiagnostic(formData);
-    
-    // Show Toast
-    toast({
-      title: "Projet envoyé !",
-      description: "Un expert NOVA B étudie vos informations et vous recontactera sous 48h.",
-      duration: 5000,
-    });
+    try {
+      setIsSubmitting(true);
+      // Save to Supabase
+      const { error } = await supabase.from('diagnostics').insert([{
+        user_name: formData.name,
+        email: formData.email,
+        subject: `Nouveau Diagnostic: ${formData.type}`,
+        message: JSON.stringify({
+          type: formData.type,
+          location: formData.location,
+          hasLand: formData.hasLand,
+          investment: formData.investment,
+          workDate: formData.workDate,
+          phone: formData.phone
+        }),
+        status: 'new'
+      }]);
 
-    // Format WhatsApp Message
-    const text = `*NOUVEAU PROJET DIAGNOSTIC NOVA B*%0A%0A` +
-      `📌 *Type:* ${formData.type}%0A` +
-      `📍 *Lieu:* ${formData.location} (${formData.hasLand ? 'Terrain acquis' : 'Recherche terrain'})%0A` +
-      `💰 *Budget:* ${formData.investment}%0A` +
-      `📅 *Début:* ${formData.workDate}%0A` +
-      `👤 *Nom:* ${formData.name}%0A` +
-      `📞 *Tel:* +225${formData.phone}%0A` +
-      `📧 *Email:* ${formData.email}`;
+      if (error) throw error;
+      
+      // Show Toast
+      toast({
+        title: "Projet envoyé !",
+        description: "Un expert NOVA B étudie vos informations et vous recontactera sous 48h.",
+        duration: 5000,
+      });
 
-    // Redirect to WhatsApp after short delay to show toast
-    setTimeout(() => {
-        window.open(`https://wa.me/2250748296768?text=${text}`, '_blank');
-        onClose();
-        setStep(1); // Reset
-        setFormData({ type: '', location: '', hasLand: false, investment: '', workDate: '', name: '', phone: '', email: '' });
-    }, 1500);
+      // Format WhatsApp Message
+      const text = `*NOUVEAU PROJET DIAGNOSTIC NOVA B*%0A%0A` +
+        `📌 *Type:* ${formData.type}%0A` +
+        `📍 *Lieu:* ${formData.location} (${formData.hasLand ? 'Terrain acquis' : 'Recherche terrain'})%0A` +
+        `💰 *Budget:* ${formData.investment}%0A` +
+        `📅 *Début:* ${formData.workDate}%0A` +
+        `👤 *Nom:* ${formData.name}%0A` +
+        `📞 *Tel:* +225${formData.phone}%0A` +
+        `📧 *Email:* ${formData.email}`;
+
+      // Redirect to WhatsApp after short delay to show toast
+      setTimeout(() => {
+          window.open(`https://wa.me/2250748296768?text=${text}`, '_blank');
+          onClose();
+          setStep(1); // Reset
+          setFormData({ type: '', location: '', hasLand: false, investment: '', workDate: '', name: '', phone: '', email: '' });
+      }, 1500);
+    } catch (err) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const projectTypes = [

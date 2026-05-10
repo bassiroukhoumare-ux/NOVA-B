@@ -15,7 +15,7 @@ const ArticleCard = ({ article, index }) => {
       <Link to={`/actualites/${article.id}`} className="block relative h-48 overflow-hidden">
         <div className="absolute inset-0 bg-terracotta/20 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 mix-blend-overlay" />
         <img 
-          src={article.coverImage} 
+          src={article.cover_image} 
           alt={article.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -28,7 +28,7 @@ const ArticleCard = ({ article, index }) => {
       
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
-          <span className="flex items-center gap-1"><Calendar size={12} className="text-terracotta" /> {article.date}</span>
+          <span className="flex items-center gap-1"><Calendar size={12} className="text-terracotta" /> {article.published_at?.split('T')[0]}</span>
           <span className="flex items-center gap-1"><User size={12} className="text-terracotta" /> {article.author}</span>
         </div>
         

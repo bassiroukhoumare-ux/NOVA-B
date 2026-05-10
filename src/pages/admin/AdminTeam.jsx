@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/db';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Edit, Trash2, X, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import useTeam from '@/hooks/useTeam';
+import useAdmin from '@/hooks/useAdmin';
 
 const AdminTeam = () => {
-  const [team, setTeam] = useState([]);
+  const { team, loading: fetchLoading, refresh } = useTeam();
+  const { upsertTeamMember, deleteTeamMember, loading: adminLoading } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentMember, setCurrentMember] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [useUrl, setUseUrl] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    setTeam(db.getTeam());
-  }, []);
-
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Supprimer ce membre ?')) {
-      const updated = team.filter(m => m.id !== id);
-      setTeam(updated);
-      db.saveTeam(updated);
-      toast({ title: "Membre supprimé" });
+      try {
+        await deleteTeamMember(id);
+        refresh();
+        toast({ title: "Membre supprimé" });
+      } catch (err) {
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      }
     }
   };
 
@@ -38,35 +39,33 @@ const AdminTeam = () => {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const newMember = {
-      id: currentMember ? currentMember.id : Date.now(),
+    const memberData = {
       name: formData.get('name'),
       role: formData.get('role'),
       bio: formData.get('bio'),
-      facebook: formData.get('facebook'),
-      linkedin: formData.get('linkedin'),
-      image: useUrl ? formData.get('imageUrl') : (imagePreview || 'https://images.unsplash.com/photo-1493882552576-fce827c6161e')
+      image_url: useUrl ? formData.get('imageUrl') : (imagePreview || 'https://images.unsplash.com/photo-1493882552576-fce827c6161e')
     };
 
-    let updated;
     if (currentMember) {
-      updated = team.map(m => m.id === newMember.id ? newMember : m);
-    } else {
-      updated = [newMember, ...team];
+      memberData.id = currentMember.id;
     }
-    
-    setTeam(updated);
-    db.saveTeam(updated);
-    setIsModalOpen(false);
-    toast({ title: "Équipe mise à jour" });
+
+    try {
+      await upsertTeamMember(memberData);
+      refresh();
+      setIsModalOpen(false);
+      toast({ title: "Équipe mise à jour" });
+    } catch (err) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    }
   };
 
   const openModal = (member = null) => {
     setCurrentMember(member);
-    setImagePreview(member?.image || '');
+    setImagePreview(member?.image_url || '');
     setUseUrl(true);
     setIsModalOpen(true);
   };
@@ -97,7 +96,7 @@ const AdminTeam = () => {
               {team.map(member => (
                 <tr key={member.id} className="hover:bg-white/5">
                   <td className="p-4 flex items-center gap-3">
-                    <img src={member.image} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                    <img src={member.image_url} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
                     <span className="font-medium text-white">{member.name}</span>
                   </td>
                   <td className="p-4 text-gray-300">{member.role}</td>
@@ -156,7 +155,7 @@ const AdminTeam = () => {
                         <button type="button" onClick={() => setUseUrl(false)} className={`text-xs px-3 py-1 rounded-full ${!useUrl ? 'bg-terracotta text-white' : 'bg-white/10 text-gray-400'}`}>Upload</button>
                     </div>
                     {useUrl ? (
-                        <input name="imageUrl" defaultValue={currentMember?.image} placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" onChange={(e) => setImagePreview(e.target.value)} />
+                        <input name="imageUrl" defaultValue={currentMember?.image_url} placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white" onChange={(e) => setImagePreview(e.target.value)} />
                     ) : (
                         <input type="file" accept="image/*" onChange={handleImageChange} className="w-full text-gray-400 text-sm" />
                     )}

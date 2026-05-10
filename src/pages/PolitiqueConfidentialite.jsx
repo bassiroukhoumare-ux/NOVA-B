@@ -8,24 +8,40 @@ const PolitiqueConfidentialite = () => {
 
   const sections = [
     {
-      title: "1. Collecte des Données",
-      content: "Nous collectons les informations que vous nous fournissez directement lorsque vous utilisez notre formulaire de contact : nom, prénom, adresse email, numéro de téléphone. Ces données sont nécessaires pour traiter votre demande et répondre à vos besoins."
+      title: "1. Préambule et Champ d'application",
+      content: "La présente politique de confidentialité a pour but d'informer les utilisateurs du site NOVA B sur la manière dont leurs données personnelles sont collectées, traitées et protégées. NOVA B s'engage à ce que la collecte et le traitement de vos données, effectués à partir du site, soient conformes au Règlement Général sur la Protection des Données (RGPD) ainsi qu'aux lois locales applicables. Cette politique s'applique à tous les services proposés sur notre plateforme en ligne."
     },
     {
-      title: "2. Utilisation des Données",
-      content: "Vos données sont utilisées exclusivement par NOVA B pour :\n- Répondre à vos demandes d'information\n- Établir des devis commerciaux\n- Vous informer sur nos nouveaux services (avec votre accord)\nElles ne sont jamais vendues ni louées à des tiers."
+      title: "2. Données Personnelles Collectées",
+      content: "Lors de votre navigation ou de l'utilisation de nos formulaires de contact, nous sommes susceptibles de collecter les données suivantes :\n- Informations d'identification : nom, prénom, adresse e-mail, numéro de téléphone.\n- Informations professionnelles : nom de l'entreprise, poste occupé, nature de votre projet architectural ou de construction.\n- Données de navigation : adresse IP, type de navigateur, pages visitées, temps passé sur le site (via des cookies essentiels et analytiques)."
     },
     {
-      title: "3. Sécurité et Conservation",
-      content: "Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles pour protéger vos données contre tout accès non autorisé. Vos données sont conservées pendant une durée de 3 ans à compter de notre dernier contact, sauf obligation légale contraire."
+      title: "3. Finalités du Traitement",
+      content: "Les données que nous collectons sont utilisées pour les finalités suivantes :\n- Gestion et suivi de vos demandes de contact, de devis ou de renseignements.\n- Exécution des contrats et suivi de vos projets architecturaux ou de construction.\n- Amélioration continue de notre site web et de l'expérience utilisateur.\n- Envoi de communications commerciales ou de newsletters (uniquement avec votre consentement préalable et explicite).\n- Respect de nos obligations légales et réglementaires."
     },
     {
-      title: "4. Vos Droits (RGPD)",
-      content: "Conformément à la réglementation en vigueur, vous disposez d'un droit d'accès, de rectification, d'effacement et de portabilité de vos données. Pour exercer ces droits, veuillez nous contacter à l'adresse : contact@novab.com."
+      title: "4. Partage et Transfert des Données",
+      content: "NOVA B est le seul destinataire de vos données. Nous ne vendons, ne louons ni ne partageons vos informations personnelles à des tiers à des fins commerciales. Toutefois, vos données peuvent être transmises à nos sous-traitants techniques (hébergeurs, fournisseurs de solutions d'emailing) dans le strict cadre de la réalisation de nos services. Ces prestataires sont soumis à des obligations strictes de confidentialité et de sécurité."
     },
     {
-      title: "5. Cookies",
-      content: "Notre site utilise des cookies techniques nécessaires au bon fonctionnement du site. Nous pouvons également utiliser des cookies de mesure d'audience anonymes pour améliorer votre expérience utilisateur."
+      title: "5. Sécurité et Durée de Conservation",
+      content: "Nous mettons en œuvre des mesures de sécurité techniques et organisationnelles avancées (chiffrement SSL, accès restreints, pare-feu) pour protéger vos données contre toute destruction, perte, altération ou accès non autorisé.\nVos données personnelles sont conservées uniquement pendant la durée nécessaire aux finalités pour lesquelles elles ont été collectées :\n- Demandes de contact : 3 ans après le dernier contact émanant de vous.\n- Données contractuelles : 5 à 10 ans selon les obligations légales, à compter de la fin de la relation commerciale."
+    },
+    {
+      title: "6. Vos Droits (Conformité RGPD)",
+      content: "Conformément à la réglementation, vous disposez des droits suivants concernant vos données personnelles :\n- Droit d'accès et de rectification.\n- Droit à l'effacement (droit à l'oubli).\n- Droit à la limitation du traitement et droit d'opposition.\n- Droit à la portabilité de vos données.\nPour exercer ces droits, vous pouvez nous contacter à tout moment à l'adresse : dpo@novab.com ou via notre formulaire de contact. Nous nous engageons à répondre à votre demande dans un délai maximum d'un mois."
+    },
+    {
+      title: "7. Gestion des Cookies et Traceurs",
+      content: "Notre site utilise des cookies pour assurer son bon fonctionnement, analyser le trafic et optimiser votre navigation. Un cookie est un petit fichier texte déposé sur votre terminal. Vous pouvez à tout moment paramétrer votre navigateur pour refuser l'installation des cookies non essentiels. Les cookies essentiels (session, sécurité) ne peuvent être désactivés. Les cookies analytiques sont conservés pour une durée maximale de 13 mois."
+    },
+    {
+      title: "8. Notification de violation de données",
+      content: "En cas de violation de données à caractère personnel présentant un risque pour les droits et libertés des personnes physiques, NOVA B s'engage à le notifier à l'autorité de contrôle compétente dans les délais légaux impartis (72 heures). Les utilisateurs concernés seront également informés si le risque est jugé élevé."
+    },
+    {
+      title: "9. Modifications de la Politique de Confidentialité",
+      content: "NOVA B se réserve le droit de modifier la présente politique à tout moment afin de s'adapter aux évolutions législatives et réglementaires. La date de la dernière mise à jour sera toujours indiquée en bas de cette page."
     }
   ];
 

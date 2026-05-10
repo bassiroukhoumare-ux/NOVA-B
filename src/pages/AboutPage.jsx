@@ -1,17 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { db } from '@/lib/db'; // Dynamic team data
+import useTeam from '@/hooks/useTeam';
 import { Target, CheckCircle, PenTool, Layout, Home, Monitor } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import usePageTracking from '@/hooks/usePageTracking';
 
 const AboutPage = () => {
   usePageTracking();
-  const [team, setTeam] = useState([]);
+  const { team, loading } = useTeam();
 
-  useEffect(() => {
-    setTeam(db.getTeam());
-  }, []);
+  const methodologySteps = [
+    { number: "01", title: "Écoute & immersion", desc: "Compréhension profonde de vos besoins et de votre vision." },
+    { number: "02", title: "Esquisses & rendus 3D", desc: "Premières propositions visuelles et spatiales." },
+    { number: "03", title: "Validation technique", desc: "Étude de faisabilité, chiffrage précis et démarches administratives." },
+    { number: "04", title: "Réalisation", desc: "Suivi de chantier rigoureux par nos équipes dédiées." },
+    { number: "05", title: "Livraison & suivi", desc: "Remise des clés et accompagnement post-projet." }
+  ];
 
   return (
     <div className="bg-anthracite min-h-screen pt-24 overflow-hidden">
@@ -82,42 +86,59 @@ const AboutPage = () => {
         </div>
       </section>
 
-      {/* Notre Équipe */}
-      <section className="py-24 container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-display font-bold text-white mb-4">Notre Équipe</h2>
-          <div className="w-16 h-1 bg-terracotta mx-auto rounded-full" />
+      {/* Méthodologie */}
+      <section className="py-24 relative">
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <span className="text-terracotta font-bold tracking-[0.2em] text-sm uppercase mb-2 block">Processus</span>
+            <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-4">Notre méthodologie éprouvée</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Chaque projet suit un processus rigoureux pour garantir un résultat final à la hauteur de vos attentes.</p>
+          </div>
+
+          <div className="relative mt-20">
+            <div className="hidden md:block absolute top-[28px] left-10 right-10 h-0.5 bg-white/10" />
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4 relative z-10">
+              {methodologySteps.map((step, idx) => (
+                <motion.div 
+                  key={idx}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1 }}
+                  viewport={{ once: true }}
+                  className="flex flex-col items-center text-center group"
+                >
+                  <div className="w-14 h-14 rounded-full bg-anthracite border-2 border-white/10 flex items-center justify-center text-lg font-display font-bold text-gray-400 group-hover:border-terracotta group-hover:text-terracotta transition-colors mb-6 shadow-xl">
+                    {step.number}
+                  </div>
+                  <h3 className="text-lg font-bold text-white mb-3 leading-tight">{step.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed px-2">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {team.map((member, idx) => (
-            <motion.div 
-              key={idx}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.2 }}
-              className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center group hover:bg-white/10 transition-colors"
-            >
-              <div className="relative w-40 h-40 mx-auto mb-6">
-                <div className="absolute inset-0 bg-terracotta rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity" />
-                <img 
-                  src={member.image} 
-                  alt={member.name} 
-                  className="w-full h-full object-cover rounded-full border-4 border-[#2C2C2C] relative z-10" 
-                />
-              </div>
-              <h3 className="text-2xl font-bold text-white mb-1">{member.name}</h3>
-              <p className="text-terracotta font-medium mb-4 uppercase text-xs tracking-widest">{member.role}</p>
-              <p className="text-gray-400 text-sm mb-6">{member.bio}</p>
-              
-              <Link to="/contact">
-                <button className="text-white bg-white/10 hover:bg-terracotta px-6 py-2 rounded-full text-sm font-bold transition-colors">
-                  Contacter
-                </button>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+      </section>
+
+      {/* CTA Contact */}
+      <section className="py-32 bg-[#252525] container mx-auto px-6 rounded-t-[40px] text-center relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-3xl bg-terracotta/5 rounded-full blur-[100px] pointer-events-none" />
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="relative z-10 max-w-3xl mx-auto"
+        >
+          <h2 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">Vous avez un projet ?</h2>
+          <p className="text-xl text-gray-400 mb-10 leading-relaxed">
+            Notre équipe d'experts est prête à transformer votre vision en réalité. Discutons ensemble de vos idées et de la meilleure façon de les concrétiser.
+          </p>
+          <Link to="/contact">
+            <button className="bg-terracotta hover:bg-terracotta/90 text-white font-bold py-4 px-10 rounded-full text-lg transition-all shadow-[0_0_20px_rgba(204,88,51,0.4)] hover:shadow-[0_0_30px_rgba(204,88,51,0.6)] inline-flex items-center gap-3 group">
+              Cliquez ici pour nous contacter
+              <span className="group-hover:translate-x-2 transition-transform">→</span>
+            </button>
+          </Link>
+        </motion.div>
       </section>
     </div>
   );
