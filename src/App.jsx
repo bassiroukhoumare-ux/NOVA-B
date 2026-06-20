@@ -30,8 +30,16 @@ import AdminNews from '@/pages/admin/News';
 import AdminMembers from '@/pages/admin/Members';
 import AdminCategories from '@/pages/admin/Categories';
 import AdminSettings from '@/pages/admin/Settings';
+import MaintenancePage from '@/pages/MaintenancePage';
+
+// Activer / désactiver le mode maintenance
+const MAINTENANCE_MODE = true;
 
 function App() {
+  if (MAINTENANCE_MODE) {
+    return <MaintenancePage />;
+  }
+
   return (
     <AuthProvider>
       <Router>
