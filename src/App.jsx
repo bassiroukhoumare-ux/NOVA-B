@@ -33,7 +33,7 @@ import AdminSettings from '@/pages/admin/Settings';
 import MaintenancePage from '@/pages/MaintenancePage';
 
 // Activer / désactiver le mode maintenance
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 function App() {
   if (MAINTENANCE_MODE) {
