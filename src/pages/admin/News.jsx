@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { isVideoUrl } from '../../lib/media';
 import { 
@@ -16,8 +16,50 @@ import {
   BookOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactQuill from 'react-quill';
+import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+
+// --- Cloudinary config (cloud name + UNSIGNED preset are safe to expose client-side) ---
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dl1ozine7';
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'nova_unsigned';
+
+const uploadToCloudinary = async (file) => {
+  const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+  const body = new FormData();
+  body.append('file', file);
+  body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(endpoint, { method: 'POST', body });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error?.message || "Échec de l'upload sur Cloudinary");
+  }
+  return data.secure_url;
+};
+
+// Register a custom "video" blot so uploaded videos render as a real <video> player
+// inside the article body (Quill's default video blot only embeds an iframe URL).
+const BlockEmbed = Quill.import('blots/block/embed');
+class VideoBlot extends BlockEmbed {
+  static create(url) {
+    const node = super.create();
+    node.setAttribute('src', url);
+    node.setAttribute('controls', true);
+    node.setAttribute('controlslist', 'nodownload');
+    node.setAttribute('preload', 'metadata');
+    node.setAttribute('playsinline', true);
+    node.setAttribute('style', 'max-width:100%;border-radius:12px;display:block;margin:1rem 0;');
+    return node;
+  }
+  static value(node) {
+    return node.getAttribute('src');
+  }
+}
+VideoBlot.blotName = 'video';
+VideoBlot.tagName = 'video';
+Quill.register(VideoBlot, true);
 
 const News = () => {
   const [articles, setArticles] = useState([]);
@@ -43,6 +85,8 @@ const News = () => {
 
   const [imagePreview, setImagePreview] = useState(null);
   const [customCategory, setCustomCategory] = useState('');
+  const [bodyUploading, setBodyUploading] = useState(false);
+  const quillRef = useRef(null);
 
   useEffect(() => {
     fetchArticles();
@@ -117,29 +161,8 @@ const News = () => {
     setShowModal(true);
   };
 
-  // Cloudinary upload (handles both images and videos).
-  // Cloud name and the UNSIGNED upload preset are safe to expose in client code
-  // (they are inlined into the browser bundle either way). Env vars override the defaults.
-  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dl1ozine7';
-  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'nova_unsigned';
-
-  const handleMediaUpload = async (file) => {
-    const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
-    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
-
-    const body = new FormData();
-    body.append('file', file);
-    body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-    const res = await fetch(endpoint, { method: 'POST', body });
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data?.error?.message || "Échec de l'upload sur Cloudinary");
-    }
-
-    return data.secure_url;
-  };
+  // Upload helper (module-scope uploadToCloudinary handles both images and videos).
+  const handleMediaUpload = uploadToCloudinary;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -220,15 +243,47 @@ const News = () => {
     ? formData.cover_image.type.startsWith('video/')
     : isVideoUrl(imagePreview);
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link', 'image', 'video'],
-      ['clean']
-    ],
+  // Insert media into the editor body by uploading the selected file to Cloudinary.
+  const insertBodyMedia = (accept, blotType) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.click();
+    input.onchange = async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const editor = quillRef.current && quillRef.current.getEditor();
+      if (!editor) return;
+      const range = editor.getSelection(true);
+      const index = range ? range.index : editor.getLength();
+      try {
+        setBodyUploading(true);
+        const url = await uploadToCloudinary(file);
+        editor.insertEmbed(index, blotType, url, 'user');
+        editor.setSelection(index + 1, 0, 'user');
+      } catch (err) {
+        alert("Erreur lors de l'ajout du média : " + err.message);
+      } finally {
+        setBodyUploading(false);
+      }
+    };
   };
+
+  const quillModules = useMemo(() => ({
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, 3, false] }],
+        ['bold', 'italic', 'underline', 'strike'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link', 'image', 'video'],
+        ['clean']
+      ],
+      handlers: {
+        image: () => insertBodyMedia('image/*', 'image'),
+        video: () => insertBodyMedia('video/*', 'video'),
+      },
+    },
+  }), []);
 
   return (
     <div className="space-y-8">
@@ -530,16 +585,25 @@ const News = () => {
 
                 {/* Rich Text Content */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Corps de l'Article</label>
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Corps de l'Article</label>
+                    {bodyUploading && (
+                      <span className="flex items-center gap-2 text-xs text-terracotta font-medium">
+                        <Loader2 className="animate-spin" size={14} /> Téléversement du média en cours...
+                      </span>
+                    )}
+                  </div>
                   <div className="quill-dark-theme bg-white/5 border border-white/10 rounded-2xl overflow-hidden focus-within:border-terracotta transition-colors">
-                    <ReactQuill 
+                    <ReactQuill
+                      ref={quillRef}
                       theme="snow"
                       value={formData.content}
                       onChange={(content) => setFormData({...formData, content})}
                       modules={quillModules}
-                      placeholder="Rédigez votre article ici. Vous pouvez insérer des images et des liens."
+                      placeholder="Rédigez votre article ici. Vous pouvez insérer des images et des vidéos via la barre d'outils."
                     />
                   </div>
+                  <p className="text-[11px] text-gray-500 ml-1">Astuce : utilisez les icônes 🖼️ image et 🎬 vidéo de la barre d'outils pour téléverser un fichier directement dans le texte.</p>
                 </div>
 
                 {/* Footer Actions */}
