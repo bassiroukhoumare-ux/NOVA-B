@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowRight } from 'lucide-react';
+import { isVideoUrl } from '../lib/media';
 
 const ArticleCard = ({ article, index }) => {
   return (
@@ -14,11 +15,21 @@ const ArticleCard = ({ article, index }) => {
     >
       <Link to={`/actualites/${article.id}`} className="block relative h-48 overflow-hidden">
         <div className="absolute inset-0 bg-terracotta/20 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 mix-blend-overlay" />
-        <img 
-          src={article.cover_image} 
-          alt={article.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
+        {isVideoUrl(article.cover_image) ? (
+          <video
+            src={article.cover_image}
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <img
+            src={article.cover_image}
+            alt={article.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        )}
         <div className="absolute top-4 left-4 z-20">
           <span className="bg-terracotta/90 backdrop-blur text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
             {article.category}

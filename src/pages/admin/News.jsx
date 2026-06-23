@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { isVideoUrl } from '../../lib/media';
 import { 
   Plus, 
   Search, 
@@ -116,22 +117,28 @@ const News = () => {
     setShowModal(true);
   };
 
-  const handleImageUpload = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `covers/${fileName}`;
+  // Cloudinary upload (handles both images and videos).
+  // Cloud name and the UNSIGNED upload preset are safe to expose in client code
+  // (they are inlined into the browser bundle either way). Env vars override the defaults.
+  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dl1ozine7';
+  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'nova_unsigned';
 
-    const { error: uploadError } = await supabase.storage
-      .from('news-images')
-      .upload(filePath, file);
+  const handleMediaUpload = async (file) => {
+    const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
 
-    if (uploadError) throw uploadError;
+    const body = new FormData();
+    body.append('file', file);
+    body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-    const { data } = supabase.storage
-      .from('news-images')
-      .getPublicUrl(filePath);
+    const res = await fetch(endpoint, { method: 'POST', body });
+    const data = await res.json();
 
-    return data.publicUrl;
+    if (!res.ok) {
+      throw new Error(data?.error?.message || "Échec de l'upload sur Cloudinary");
+    }
+
+    return data.secure_url;
   };
 
   const handleSubmit = async (e) => {
@@ -140,9 +147,9 @@ const News = () => {
 
     try {
       let imageUrl = formData.cover_image;
-      
+
       if (formData.cover_image instanceof File) {
-        imageUrl = await handleImageUpload(formData.cover_image);
+        imageUrl = await handleMediaUpload(formData.cover_image);
       }
 
       const readingTime = calculateReadingTime(formData.content);
@@ -203,17 +210,22 @@ const News = () => {
     }
   };
 
-  const filteredArticles = articles.filter(a => 
+  const filteredArticles = articles.filter(a =>
     a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     a.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Is the current cover preview a video (newly selected file or existing URL)?
+  const previewIsVideo = formData.cover_image instanceof File
+    ? formData.cover_image.type.startsWith('video/')
+    : isVideoUrl(imagePreview);
 
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      ['link', 'image'],
+      ['link', 'image', 'video'],
       ['clean']
     ],
   };
@@ -269,7 +281,11 @@ const News = () => {
             >
               <div className="aspect-video bg-gray-800 relative overflow-hidden border-b border-white/5">
                 {article.cover_image ? (
-                  <img src={article.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  isVideoUrl(article.cover_image) ? (
+                    <video src={article.cover_image} muted className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={article.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  )
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-600">
                     <ImageIcon size={40} />
@@ -364,19 +380,23 @@ const News = () => {
               <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-8">
                 {/* Cover Image Upload */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Image de couverture</label>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Média de couverture (image ou vidéo)</label>
                   <div className="relative group aspect-[21/9] bg-white/5 border-2 border-dashed border-white/10 rounded-3xl overflow-hidden flex flex-col items-center justify-center transition-all hover:border-terracotta/50">
                     {imagePreview ? (
                       <>
-                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button 
+                        {previewIsVideo ? (
+                          <video src={imagePreview} controls className="w-full h-full object-cover bg-black" />
+                        ) : (
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                          <button
                             type="button"
                             onClick={() => {
                               setImagePreview(null);
                               setFormData({...formData, cover_image: null});
                             }}
-                            className="bg-red-500 p-2 rounded-full text-white"
+                            className="bg-red-500 p-2 rounded-full text-white pointer-events-auto"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -385,10 +405,10 @@ const News = () => {
                     ) : (
                       <>
                         <Upload className="text-gray-500 mb-2" size={32} />
-                        <p className="text-xs text-gray-500 font-medium">Glissez ou cliquez pour uploader une couverture</p>
-                        <input 
+                        <p className="text-xs text-gray-500 font-medium">Glissez ou cliquez pour uploader une image ou une vidéo</p>
+                        <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*,video/*"
                           onChange={(e) => {
                             const file = e.target.files[0];
                             if (file) {

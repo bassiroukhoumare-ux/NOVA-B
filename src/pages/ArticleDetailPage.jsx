@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useArticles from '@/hooks/useArticles';
 import { ChevronLeft, Calendar, User, Clock, Heart, Share2, Facebook, Linkedin, Twitter, Copy, Send } from 'lucide-react';
+import { isVideoUrl } from '@/lib/media';
 
 const ArticleDetailPage = () => {
   const { id } = useParams();
@@ -42,14 +43,29 @@ const ArticleDetailPage = () => {
     <div className="bg-anthracite min-h-screen pb-20">
       {/* Hero Image */}
       <div className="relative h-[60vh] w-full overflow-hidden">
-        <motion.img 
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2 }}
-          src={article.cover_image} 
-          alt={article.title} 
-          className="w-full h-full object-cover"
-        />
+        {isVideoUrl(article.cover_image) ? (
+          <motion.video
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 2 }}
+            src={article.cover_image}
+            controls
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-full object-cover bg-black"
+          />
+        ) : (
+          <motion.img
+            initial={{ scale: 1.1 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 2 }}
+            src={article.cover_image}
+            alt={article.title}
+            className="w-full h-full object-cover"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-anthracite via-anthracite/60 to-transparent" />
         
         <div className="absolute inset-0 flex flex-col justify-end container mx-auto px-6 pb-20">
