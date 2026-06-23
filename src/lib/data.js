@@ -2,7 +2,7 @@ export const projects = [
   {
     id: 1,
     title: 'Résidence Onyx',
-    category: 'Architecture',
+    category: "Architecture d'intérieur",
     year: '2025',
     image: 'https://images.unsplash.com/photo-1510414866645-87ed8a0fa980',
     description: "Une structure monolithique noire qui joue avec la lumière naturelle, créant des espaces de vie introspectifs et luxueux.",

@@ -14,8 +14,8 @@ const ProjectsGridNOVA = () => {
     'Commercial', 
     'Décoration', 
     'Rénovation', 
-    'Construction', 
-    'Architecture'
+    'Construction',
+    "Architecture d'intérieur"
   ];
 
   const filteredProjects = selectedFilter === 'Tous' 

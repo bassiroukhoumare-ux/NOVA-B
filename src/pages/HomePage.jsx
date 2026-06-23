@@ -17,7 +17,7 @@ const HomePage = () => {
     { 
       id: 'architecture',
       icon: Ruler, 
-      title: "Architecture & Maîtrise d'œuvre", 
+      title: "Architecture d'intérieur",
       shortDesc: "Conception bioclimatique et structurelle.",
       fullDesc: "Conception de plans, projection 3D, gestion complète des projets, demandes d'autorisation.",
       points: ["Plans architecturaux", "Modélisation 3D", "Gestion de projet", "Autorisations administratives"]
@@ -25,7 +25,7 @@ const HomePage = () => {
     { 
       id: 'design',
       icon: Palette, 
-      title: "Décoration intérieure & extérieure", 
+      title: "Aménagement intérieur & extérieur",
       shortDesc: "Espaces immersifs et matériaux nobles.",
       fullDesc: "Ambiances personnalisées, choix des matériaux, mobilier, rendus 3D immersifs.",
       points: ["Design d'intérieur", "Sélection de matériaux", "Aménagement mobilier", "Visualisation 3D"]

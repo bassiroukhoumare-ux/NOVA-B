@@ -9,13 +9,13 @@ const ServicesPage = () => {
   const services = [
     { 
       icon: Ruler, 
-      title: "Architecture", 
+      title: "Architecture d'intérieur",
       desc: "Conception architecturale innovante et durable, adaptée au climat tropical. Nous créons des structures qui racontent une histoire.",
       details: ["Plans directeurs", "Études de faisabilité", "Modélisation 3D (BIM)"]
     },
     { 
       icon: Palette, 
-      title: "Design Intérieur", 
+      title: "Aménagement intérieur & extérieur",
       desc: "Aménagement d'espaces intérieurs qui allient esthétique et fonctionnalité. Nous créons des ambiances uniques.",
       details: ["Choix des matériaux", "Mobilier sur mesure", "Éclairage d'ambiance"]
     },
