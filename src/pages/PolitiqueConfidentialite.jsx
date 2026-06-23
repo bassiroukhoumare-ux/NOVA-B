@@ -29,7 +29,7 @@ const PolitiqueConfidentialite = () => {
     },
     {
       title: "6. Vos Droits (Conformité RGPD)",
-      content: "Conformément à la réglementation, vous disposez des droits suivants concernant vos données personnelles :\n- Droit d'accès et de rectification.\n- Droit à l'effacement (droit à l'oubli).\n- Droit à la limitation du traitement et droit d'opposition.\n- Droit à la portabilité de vos données.\nPour exercer ces droits, vous pouvez nous contacter à tout moment à l'adresse : dpo@novab.com ou via notre formulaire de contact. Nous nous engageons à répondre à votre demande dans un délai maximum d'un mois."
+      content: "Conformément à la réglementation, vous disposez des droits suivants concernant vos données personnelles :\n- Droit d'accès et de rectification.\n- Droit à l'effacement (droit à l'oubli).\n- Droit à la limitation du traitement et droit d'opposition.\n- Droit à la portabilité de vos données.\nPour exercer ces droits, vous pouvez nous contacter à tout moment à l'adresse : dpo@nova-b.com ou via notre formulaire de contact. Nous nous engageons à répondre à votre demande dans un délai maximum d'un mois."
     },
     {
       title: "7. Gestion des Cookies et Traceurs",

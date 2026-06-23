@@ -22,8 +22,8 @@ const Counter = ({ value, suffix = "" }) => {
 
 const StatsSection = () => {
   const stats = [
-    { value: 12, label: "Années d'Expérience", suffix: "+" },
-    { value: 85, label: "Projets Livrés", suffix: "+" }
+    { value: 10, label: "Années d'Expérience", suffix: "+" },
+    { value: 50, label: "Projets Livrés", suffix: "+" }
   ];
 
   return (

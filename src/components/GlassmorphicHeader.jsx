@@ -111,7 +111,7 @@ const GlassmorphicHeader = () => {
                       <span className="font-medium text-sm">WhatsApp</span>
                     </a>
 
-                    <a href="mailto:contact@novab.com" className="flex items-center gap-3 px-5 py-4 hover:bg-white/10 transition-colors text-white">
+                    <a href="mailto:contact@nova-b.com" className="flex items-center gap-3 px-5 py-4 hover:bg-white/10 transition-colors text-white">
                       <div className="bg-cyan/20 p-2 rounded-full"><Mail size={16} className="text-cyan" /></div>
                       <span className="font-medium text-sm">Email</span>
                     </a>
@@ -209,7 +209,7 @@ const GlassmorphicHeader = () => {
                   <span className="font-medium">WhatsApp</span>
                 </a>
 
-                 <a href="mailto:contact@novab.com" className="w-full bg-white/5 hover:bg-white/10 text-white py-3 px-4 rounded-xl flex items-center gap-3 transition-colors">
+                 <a href="mailto:contact@nova-b.com" className="w-full bg-white/5 hover:bg-white/10 text-white py-3 px-4 rounded-xl flex items-center gap-3 transition-colors">
                   <Mail size={18} className="text-cyan" />
                   <span className="font-medium">Email</span>
                 </a>

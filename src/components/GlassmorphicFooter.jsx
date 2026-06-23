@@ -64,11 +64,11 @@ const GlassmorphicFooter = () => {
               </li>
               <li className="flex items-center gap-4 text-gray-400">
                 <Phone className="text-terracotta flex-shrink-0" size={18} />
-                <span className="text-sm">+225 07 48 29 67 68</span>
+                <span className="text-sm">+225 07 49 24 22 22</span>
               </li>
               <li className="flex items-center gap-4 text-gray-400">
                 <Mail className="text-terracotta flex-shrink-0" size={18} />
-                <span className="text-sm">contact@novab.com</span>
+                <span className="text-sm">contact@nova-b.com</span>
               </li>
             </ul>
           </div>

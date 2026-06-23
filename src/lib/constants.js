@@ -8,8 +8,8 @@ export const COLORS = {
 };
 
 export const CONTACT_INFO = {
-  phone: '+225 07 48 29 67 68',
-  email: 'contact@novab.com',
+  phone: '+225 07 49 24 22 22',
+  email: 'contact@nova-b.com',
   address: 'Abidjan, Côte d\'Ivoire',
   whatsapp: 'https://wa.me/2250748296768?text=Bonjour,%20je%20souhaite%20discuter%20d\'un%20projet.'
 };

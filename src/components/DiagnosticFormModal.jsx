@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, ArrowRight, Building2, Home, Briefcase, Hammer, Calendar } from 'lucide-react';
+import { X, Check, ArrowRight, Building2, Home, Briefcase, Hammer, Calendar, Ruler, Sofa, MapPin, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -11,7 +11,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     type: '',
     location: '',
-    hasLand: false,
+    landStatus: '',
     investment: '',
     workDate: '',
     name: '',
@@ -24,7 +24,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
   const handleNext = () => {
     // Validation
     if (step === 1 && !formData.type) return;
-    if (step === 2 && !formData.location) return;
+    if (step === 2 && !formData.location && !formData.landStatus) return;
     if (step === 3 && (!formData.investment || !formData.workDate)) return;
     
     setStep(prev => prev + 1);
@@ -46,7 +46,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
         message: JSON.stringify({
           type: formData.type,
           location: formData.location,
-          hasLand: formData.hasLand,
+          landStatus: formData.landStatus,
           investment: formData.investment,
           workDate: formData.workDate,
           phone: formData.phone
@@ -66,7 +66,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
       // Format WhatsApp Message
       const text = `*NOUVEAU PROJET DIAGNOSTIC NOVA B*%0A%0A` +
         `📌 *Type:* ${formData.type}%0A` +
-        `📍 *Lieu:* ${formData.location} (${formData.hasLand ? 'Terrain acquis' : 'Recherche terrain'})%0A` +
+        `📍 *Lieu:* ${formData.location || 'Non précisé'} (${formData.landStatus === 'owned' ? 'Terrain déjà acquis' : formData.landStatus === 'searching' ? 'Recherche un terrain' : 'Non précisé'})%0A` +
         `💰 *Budget:* ${formData.investment}%0A` +
         `📅 *Début:* ${formData.workDate}%0A` +
         `👤 *Nom:* ${formData.name}%0A` +
@@ -75,10 +75,10 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
 
       // Redirect to WhatsApp after short delay to show toast
       setTimeout(() => {
-          window.open(`https://wa.me/2250748296768?text=${text}`, '_blank');
+          window.open(`https://wa.me/2250749242222?text=${text}`, '_blank');
           onClose();
           setStep(1); // Reset
-          setFormData({ type: '', location: '', hasLand: false, investment: '', workDate: '', name: '', phone: '', email: '' });
+          setFormData({ type: '', location: '', landStatus: '', investment: '', workDate: '', name: '', phone: '', email: '' });
       }, 1500);
     } catch (err) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -92,6 +92,8 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
     { id: 'immeuble', label: 'Immeuble', icon: Building2, image: 'https://images.unsplash.com/photo-1703176309340-68f50990c6c5' },
     { id: 'pro', label: 'Espace Pro', icon: Briefcase, image: 'https://images.unsplash.com/photo-1612396970400-2f359e5c5bb3' },
     { id: 'renovation', label: 'Rénovation', icon: Hammer, image: 'https://images.unsplash.com/photo-1650018984119-8a3fa781fa19' },
+    { id: 'archi-interieur', label: "Architecture d'intérieur", icon: Ruler, image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6' },
+    { id: 'amenagement', label: 'Aménagement', icon: Sofa, image: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6' },
   ];
 
   return (
@@ -171,22 +173,33 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
                   <h3 className="text-2xl font-bold text-white mb-6">Parlons du lieu</h3>
                   <div className="space-y-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Localisation souhaitée ou acquise</label>
-                      <input 
-                        type="text" 
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Localisation souhaitée ou acquise <span className="text-gray-500 font-normal">(facultatif)</span></label>
+                      <input
+                        type="text"
                         placeholder="Ex: Abidjan, Cocody, Assinie..."
                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-terracotta transition-colors placeholder:text-gray-500"
                         value={formData.location}
                         onChange={(e) => setFormData({...formData, location: e.target.value})}
                       />
                     </div>
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <div className={`w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${formData.hasLand ? 'bg-terracotta border-terracotta' : 'border-gray-500 bg-transparent'}`}>
-                        {formData.hasLand && <Check size={14} className="text-white" />}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Où en êtes-vous avec le terrain ?</label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {[
+                          { id: 'owned', label: "J'ai déjà un terrain", icon: MapPin },
+                          { id: 'searching', label: 'Je recherche encore un terrain', icon: Search },
+                        ].map((opt) => (
+                          <div
+                            key={opt.id}
+                            onClick={() => setFormData({...formData, landStatus: opt.id})}
+                            className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${formData.landStatus === opt.id ? 'bg-terracotta/20 border-terracotta text-white' : 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'}`}
+                          >
+                            <opt.icon size={20} className={formData.landStatus === opt.id ? 'text-terracotta' : 'text-gray-500'} />
+                            <span className="font-medium text-sm">{opt.label}</span>
+                          </div>
+                        ))}
                       </div>
-                      <input type="checkbox" className="hidden" checked={formData.hasLand} onChange={(e) => setFormData({...formData, hasLand: e.target.checked})} />
-                      <span className="text-gray-300 group-hover:text-white transition-colors">Je recherche encore un terrain</span>
-                    </label>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -198,13 +211,18 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Budget Estimatif</label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {['Standard', 'Signature', 'Exception'].map((opt) => (
-                          <div 
-                            key={opt}
-                            onClick={() => setFormData({...formData, investment: opt})}
-                            className={`p-4 rounded-xl border cursor-pointer text-center transition-all ${formData.investment === opt ? 'bg-terracotta/20 border-terracotta text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                        {[
+                          { label: 'Standard', range: 'Moins de 50 000 000 FCFA' },
+                          { label: 'Signature', range: '50 000 000 – 99 000 000 FCFA' },
+                          { label: 'Prestige', range: '100 000 000 FCFA et plus' },
+                        ].map((opt) => (
+                          <div
+                            key={opt.label}
+                            onClick={() => setFormData({...formData, investment: opt.label})}
+                            className={`p-4 rounded-xl border cursor-pointer text-center transition-all ${formData.investment === opt.label ? 'bg-terracotta/20 border-terracotta text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
                           >
-                            <span className="font-bold">{opt}</span>
+                            <span className="font-bold block">{opt.label}</span>
+                            <span className="text-xs text-gray-400 mt-1 block">{opt.range}</span>
                           </div>
                         ))}
                       </div>
@@ -243,7 +261,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
                        <span className="bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-gray-400 flex items-center">+225</span>
                        <input 
                         type="tel" 
-                        placeholder="07 48 29 67 68"
+                        placeholder="07 49 24 22 22"
                         className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-terracotta placeholder:text-gray-500"
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -274,7 +292,7 @@ const DiagnosticFormModal = ({ isOpen, onClose }) => {
                 <button 
                   type="button" 
                   onClick={handleNext} 
-                  disabled={(step === 1 && !formData.type) || (step === 2 && !formData.location) || (step === 3 && (!formData.investment || !formData.workDate))}
+                  disabled={(step === 1 && !formData.type) || (step === 2 && !formData.location && !formData.landStatus) || (step === 3 && (!formData.investment || !formData.workDate))}
                   className="bg-white text-anthracite px-6 py-2 rounded-full font-bold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   Suivant <ArrowRight size={16} />

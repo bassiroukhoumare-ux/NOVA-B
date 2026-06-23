@@ -95,7 +95,7 @@ const HeroSectionNOVA = () => {
                       <div className="bg-[#25D366]/20 p-2 rounded-full text-[#25D366]"><MessageCircle size={18} /></div>
                       <span className="font-medium">WhatsApp</span>
                     </a>
-                    <a href="mailto:contact@novab.com" className="flex items-center gap-3 px-6 py-4 hover:bg-white/10 transition-colors text-white">
+                    <a href="mailto:contact@nova-b.com" className="flex items-center gap-3 px-6 py-4 hover:bg-white/10 transition-colors text-white">
                       <div className="bg-cyan/20 p-2 rounded-full text-cyan"><Mail size={18} /></div>
                       <span className="font-medium">Email</span>
                     </a>

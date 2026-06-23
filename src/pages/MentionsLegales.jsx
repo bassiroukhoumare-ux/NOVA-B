@@ -9,7 +9,7 @@ const MentionsLegales = () => {
   const sections = [
     {
       title: "1. Éditeur du Site",
-      content: "Le site internet NOVA B est édité par la société NOVA B Architecture, SARL au capital de 1 000 000 FCFA.\nSiège social : Abidjan, Côte d'Ivoire\nImmatriculée au RCCM d'Abidjan.\nDirecteur de la publication : Direction NOVA B\nContact : contact@novab.com | +225 07 48 29 67 68"
+      content: "Le site internet NOVA B est édité par la société NOVA B Architecture, SARL au capital de 1 000 000 FCFA.\nSiège social : Abidjan, Côte d'Ivoire\nImmatriculée au RCCM d'Abidjan.\nDirecteur de la publication : Direction NOVA B\nContact : contact@nova-b.com | +225 07 49 24 22 22"
     },
     {
       title: "2. Hébergement",

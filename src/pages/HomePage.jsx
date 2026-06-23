@@ -19,23 +19,26 @@ const HomePage = () => {
       icon: Ruler, 
       title: "Architecture d'intérieur",
       shortDesc: "Conception bioclimatique et structurelle.",
-      fullDesc: "Conception de plans, projection 3D, gestion complète des projets, demandes d'autorisation.",
-      points: ["Plans architecturaux", "Modélisation 3D", "Gestion de projet", "Autorisations administratives"]
+      headline: "L'art du détail, du gros œuvre aux finitions.",
+      fullDesc: "Vous avez un projet de construction ou d'extension ? Dès que le gros œuvre est achevé, nos architectes d'intérieur prennent le relais pour transformer les volumes bruts en un lieu de vie exceptionnel. Cloisonnement intelligent, optimisation de la lumière, choix de matériaux nobles et aménagement sur mesure : nous orchestrons chaque détail pour vous offrir des finitions premium et un résultat clé en main qui dépasse vos attentes.",
+      points: ["Plan d'exécution", "Modélisation 3D PHOTO RÉALISTE", "Gestion de projet", "Autorisations administratives"]
     },
     { 
       id: 'design',
       icon: Palette, 
       title: "Aménagement intérieur & extérieur",
       shortDesc: "Espaces immersifs et matériaux nobles.",
-      fullDesc: "Ambiances personnalisées, choix des matériaux, mobilier, rendus 3D immersifs.",
+      headline: "De la structure à l'émotion : l'harmonie parfaite.",
+      fullDesc: "Nous donnons vie à vos projets les plus ambitieux en prenant en charge l'intégralité de votre aménagement et de votre décoration, à l'intérieur comme à l'extérieur. Dès la fin du gros œuvre ou lors d'une rénovation d'envergure, nous concevons des agencements sur mesure (dressings, pool-houses, bibliothèques) et sélectionnons des pièces de designers, des tissus d'éditeurs et des finitions premium. Notre approche globale garantit une cohérence esthétique absolue : votre jardin répond à votre séjour, vos terrasses prolongent vos chambres, et chaque détail respire l'excellence.",
       points: ["Design d'intérieur", "Sélection de matériaux", "Aménagement mobilier", "Visualisation 3D"]
     },
     { 
       id: 'construction',
       icon: HardHat, 
-      title: "Construction & Réalisation", 
+      title: "Construction & Réalisation",
       shortDesc: "Suivi rigoureux et finitions parfaites.",
-      fullDesc: "Réalisation complète des travaux avec un suivi rigoureux du chantier pour garantir des finitions parfaites.",
+      headline: "Donner vie à vos plans : de la terre à la matière.",
+      fullDesc: "Confiez-nous votre vision, nous la sortons de terre. Notre service Construction prend en charge l'intégralité du gros œuvre avec une exigence de qualité absolue. Maçonnerie, charpente, isolation haute performance : nous orchestrons chaque étape technique du chantier. Parce que nous anticipons déjà l'aménagement et la décoration future, nous construisons avec une précision millimétrée. Une prise en charge totale pour un chantier serein et des volumes parfaitement préparés à recevoir vos finitions haut de gamme.",
       points: ["Gros œuvre & Second œuvre", "Suivi de chantier", "Contrôle qualité", "Respect des normes"]
     }
   ];
@@ -154,7 +157,8 @@ const HomePage = () => {
               </div>
 
               <h3 className="text-3xl font-display font-bold text-white mb-4">{selectedService.title}</h3>
-              <p className="text-gray-400 text-lg mb-8">{selectedService.fullDesc}</p>
+              {selectedService.headline && <p className="text-terracotta text-xl font-semibold mb-4">{selectedService.headline}</p>}
+              <p className="text-gray-400 text-lg mb-8 leading-relaxed">{selectedService.fullDesc}</p>
 
               <div className="space-y-4 mb-10">
                 {selectedService.points.map((point, idx) => (
